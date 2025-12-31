@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Ofertas Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/index.js"></script>
+</head>
+<body>
+
+    <div id="telaInicial">
+        <div class="logo-inicial">Gerador<span>Pro</span></div>
+        <div class="temas-scroll" id="temasScroll">
+            <div class="tema-card" data-tema="quarta-verde">
+                <img class="tema-imagem" src="header_frango.jpg" alt="Quarta Verde">
+                <div class="tema-nome">Quarta feira Verde</div>
+            </div>
+            <div class="tema-card" data-tema="dia-d-natal">
+                <img class="tema-imagem" src="header_natal.jpg" alt="Natal">
+                <div class="tema-nome">Dia D Natal</div>
+            </div>
+            <div class="tema-card" data-tema="sexta-frango">
+                <img class="tema-imagem" src="header_frango.jpg" alt="Sexta Frango">
+                <div class="tema-nome">Sexta do Frango</div>
+            </div>
+        </div>
+        <button class="btn-comecar" onclick="iniciarEditor()">CRIAR ENCARTE AGORA</button>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="logo">Gerador<span>Pro</span></div>
+
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="openTab('tab-produtos')">Produtos</button>
+            <button class="tab-btn" onclick="openTab('tab-imagens')">Imagens</button>
+            <button class="tab-btn" onclick="openTab('tab-rodape')">Rodapé</button>
+            <button class="tab-btn" onclick="openTab('tab-config')">Config</button>
+        </div>
+
+        <div id="tab-produtos" class="tab-content active">
+            <div class="panel-section">
+                <h3>1. Lista de Preços</h3>
+                <textarea id="bulkInput" placeholder="Exemplo:&#10;BATATA KG 3,99&#10;CEBOLA KG 2,49" oninput="processList()"></textarea>
+                <button class="btn-primary" style="padding:10px; font-size:14px" onclick="processList()">ATUALIZAR GRADE</button>
+            </div>
+            <div class="panel-section" id="editor-produto" style="opacity: 0.5; pointer-events: none;">
+                <h3>2. Editar Item Selecionado</h3>
+                <label>Nome do Produto</label>
+                <input type="text" id="editNome" oninput="applyEdits()">
+                <div style="display:flex; gap:10px">
+                    <input type="text" id="editPreco" placeholder="Preço" oninput="applyEdits()">
+                    <select id="editUnidade" onchange="applyEdits()">
+                        <option value="KG">KG</option>
+                        <option value="UN">UN</option>
+                        <option value="BDJ">BDJ</option>
+                        <option value="PCT">PCT</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-imagens" class="tab-content">
+            <div class="panel-section">
+                <h3>Busca Inteligente</h3>
+                <div style="display:flex; gap:5px">
+                    <input type="text" id="editSearch" placeholder="Ex: alface crespa">
+                    <button class="btn-small btn-icon" onclick="searchImages()">🔍</button>
+                </div>
+                <p style="font-size: 11px; color: #666; margin-top: 10px;">Selecione um produto no encarte antes de pesquisar.</p>
+            </div>
+        </div>
+
+        <div id="tab-rodape" class="tab-content">
+            <div class="panel-section">
+                <h3>Dados do Rodapé</h3>
+                <label>Validade das Ofertas</label>
+                <input type="text" id="editValidade" value="31/12/2025" oninput="updateFooter()">
+                
+                <label>Instagram</label>
+                <input type="text" id="editInsta" value="@SupermercadoMoreiraMirassol" oninput="updateFooter()">
+                
+                <label>WhatsApp</label>
+                <input type="text" id="editWhats" value="(17) 99669-3288" oninput="updateFooter()">
+                
+                <label>Facebook</label>
+                <input type="text" id="editFace" value="@SupermercadoMoreira" oninput="updateFooter()">
+
+                <label>Endereço da Loja</label>
+                <textarea id="editEndereco" oninput="updateFooter()">Rua Abrão Thomé, 2845 - Moreira - Mirassol/SP</textarea>
+            </div>
+        </div>
+
+        <div id="tab-config" class="tab-content">
+            <div class="panel-section">
+                <h3>Ajustes do Flyer</h3>
+                <label>Título Principal</label>
+                <input type="text" id="globalTitulo" placeholder="Ex: QUARTA VERDE" oninput="document.getElementById('flyerTitle').innerText = this.value">
+                
+                <label>Sua Logomarca (PNG)</label>
+                <input type="file" accept="image/*" onchange="loadLogo(event)">
+                
+                <label>Modo de Exibição</label>
+                <select id="selectModo" onchange="toggleModo()">
+                    <option value="encarte">Modo Encarte (Grade)</option>
+                    <option value="cartaz">Modo Cartaz (1 Produto)</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="baixarImagem()" style="margin-top: auto;">BAIXAR EM ALTA QUALIDADE</button>
+    </div>
+
+    <div class="main-content">
+        <div id="artboard">
+            <div class="flyer-header">
+                <img id="temaHeaderImg" class="tema-header-img" src="">
+                <div class="header-content">
+                    <div id="flyerTitle"></div>
+                    <div class="logo-mercado">
+                        <img id="logoImg" src="" alt="Sua Logo">
+                    </div>
+                </div>
+            </div>
+
+            <div id="products-grid"></div>
+
+            <div class="flyer-footer">
+                <div class="footer-validade">
+                    Oferta válida até <span id="dataValidade">31/12/2025</span> ou enquanto durarem os estoques.
+                </div>
+
+                <div class="footer-social-bar">
+                    <div class="social-item">
+                        <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Insta">
+                        <span id="footerInsta">@SupermercadoMoreiraMirassol</span>
+                    </div>
+                    <div class="social-item">
+                        <img src="https://cdn-icons-png.flaticon.com/512/5968/5968841.png" alt="Whats">
+                        <span id="footerWhats">(17) 99669-3288</span>
+                    </div>
+                    <div class="social-item">
+                        <img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" alt="Face">
+                        <span id="footerFace">@SupermercadoMoreira</span>
+                    </div>
+                </div>
+
+                <div class="footer-address">
+                    <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" alt="Local">
+                    <span id="footerEnd">Rua Abrão Thomé, 2845 - Moreira - Mirassol/SP</span>
+                </div>
+
+                <div class="footer-cards">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Master">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Elo_logo.svg/1200px-Elo_logo.svg.png" alt="Elo">
+                    <span class="card-extra">ACEITAMOS TODOS OS CARTÕES E TICKET ALIMENTAÇÃO</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalGallery">
+        <div class="modal-content">
+            <div id="loadingOverlay">
+                <h3>Limpando fundo da imagem...</h3>
+            </div>
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <h3>Escolha uma imagem</h3>
+                <button class="btn-small" onclick="closeGallery()">FECHAR</button>
+            </div>
+            <div id="galleryGrid" class="grid-gallery"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
