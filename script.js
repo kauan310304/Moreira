@@ -1,0 +1,252 @@
+const API_KEY = "AIzaSyB0iKRgvh7ndYP6FzizQMRtTx7STRzmpX8"; 
+const CX = "53824a5961eea4cdc";
+const FALLBACK_IMG = "https://cdn-icons-png.flaticon.com/512/107/107831.jpg"; 
+
+let products = [];
+let selectedIdx = null;
+let temaSelecionado = null;
+
+const temasConfig = {
+    'dia-d-natal': { nome: 'Dia D especial de natal', bg: 'linear-gradient(135deg, #2c3e50, #3498db)', headerBg: '#e74c3c', img: 'header_natal' },
+    'sexta-frango': { nome: 'Sexta do Frango', bg: 'linear-gradient(135deg, #f39c12, #e67e22)', headerBg: '#27ae60', img: 'header_frango' },
+    'sabado-churrasco': { nome: 'Sábado do churrasco', bg: 'linear-gradient(135deg, #8b4513, #a0522d)', headerBg: '#e74c3c', img: 'header_churrasco' },
+    'fecha-mes-dezembro': { nome: 'Fecha mês Dezembro', bg: 'linear-gradient(135deg, #2c1810, #4a235a)', headerBg: '#9b59b6', img: 'header_fechames' },
+    'boa-dia': { nome: 'Boa do Dia', bg: 'linear-gradient(135deg, #f39c12, #e74c3c)', headerBg: '#f1c40f', img: 'header_fechames' },
+    'quarta-verde': { nome: 'Quarta feira Verde', bg: 'repeating-linear-gradient(45deg, #8cb369, #8cb369 10px, #9bc475 10px, #9bc475 20px)', headerBg: '#e63946', img: 'header_frango' },
+    'terca-suino': { nome: 'Terça do Suíno', bg: 'linear-gradient(135deg, #c0392b, #e74c3c)', headerBg: '#f39c12', img: 'header_churrasco' },
+    'esquema-natal': { nome: 'Esquema de Natal', bg: 'linear-gradient(135deg, #d35400, #e67e22)', headerBg: '#2ecc71', img: 'header_natal' },
+    'quinta-carne': { nome: 'Quinta da Carne', bg: 'linear-gradient(135deg, #7f3121, #b03a2e)', headerBg: '#d35400', img: 'header_churrasco' },
+    'dezembro-preco-baixo': { nome: 'Dezembro com preço baixo', bg: 'linear-gradient(135deg, #27ae60, #2ecc71)', headerBg: '#f39c12', img: 'header_natal' },
+    'novembro-barato': { nome: 'Novembro muito barato', bg: 'linear-gradient(135deg, #34495e, #2c3e50)', headerBg: '#3498db', img: 'header_fechames' },
+    'mega-novembro': { nome: 'Mega Novembro', bg: 'linear-gradient(135deg, #9b59b6, #8e44ad)', headerBg: '#e74c3c', img: 'header_fechames' },
+    'dezembro-imbatível': { nome: 'Dezembro Imbatível', bg: 'linear-gradient(135deg, #e74c3c, #c0392b)', headerBg: '#f1c40f', img: 'header_natal' },
+    'black-friday': { nome: 'Black Friday', bg: 'linear-gradient(135deg, #000, #333)', headerBg: '#f39c12', img: 'header_fechames' }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const temaCards = document.querySelectorAll('.tema-card');
+    temaCards.forEach(card => {
+        card.addEventListener('click', function() {
+            temaCards.forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            temaSelecionado = this.dataset.tema;
+        });
+    });
+});
+
+// FUNÇÃO PARA NAVEGAR ENTRE ABAS
+function openTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+}
+
+// ATUALIZAÇÃO DO RODAPÉ EM TEMPO REAL
+function updateFooter() {
+    const insta = document.getElementById('editInsta').value;
+    const whats = document.getElementById('editWhats').value;
+    const ender = document.getElementById('editEndereco').value;
+
+    if(insta) document.getElementById('footerInsta').innerText = insta;
+    if(whats) document.getElementById('footerWhats').innerText = whats;
+    if(ender) document.getElementById('footerEnd').innerText = ender;
+}
+
+// ALTERNAR ENTRE ENCARTE E CARTAZ
+function toggleModo() {
+    const modo = document.getElementById('selectModo').value;
+    const artboard = document.getElementById('artboard');
+    
+    if(modo === 'cartaz') {
+        artboard.classList.add('modo-cartaz');
+        // Se estiver no modo cartaz, forçamos apenas o primeiro produto ou grade de 1
+        document.getElementById('products-grid').className = 'cols-1';
+    } else {
+        artboard.classList.remove('modo-cartaz');
+        processList(); // Re-processa para ajustar as colunas originais
+    }
+}
+
+function loadLogo(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('logoImg').src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function iniciarEditor() {
+    if (!temaSelecionado) {
+        alert('Selecione um tema primeiro!');
+        return;
+    }
+
+    const config = temasConfig[temaSelecionado];
+    const headerImg = document.getElementById('temaHeaderImg');
+    const flyerTitle = document.getElementById('flyerTitle');
+
+    document.getElementById('globalTitulo').value = config.nome;
+    flyerTitle.innerText = ""; 
+    flyerTitle.style.background = "transparent";
+    flyerTitle.style.border = "none";
+
+    headerImg.src = config.img + ".jpg"; 
+    headerImg.style.display = 'block';
+
+    document.getElementById('artboard').style.background = config.bg;
+
+    const telaInicial = document.getElementById('telaInicial');
+    telaInicial.classList.add('fade-out');
+    
+    setTimeout(() => {
+        telaInicial.style.display = 'none';
+        document.getElementById('sidebar').classList.add('show');
+    }, 500);
+}
+
+function processList() {
+    const text = document.getElementById('bulkInput').value.trim();
+    if (!text) return;
+    const lines = text.split('\n');
+    const grid = document.getElementById('products-grid');
+    grid.innerHTML = '';
+    products = [];
+
+    // Lógica de colunas baseada na quantidade
+    grid.className = (lines.length <= 1) ? 'cols-1' : (lines.length <= 4) ? 'cols-2' : (lines.length <= 9) ? 'cols-3' : 'cols-4';
+
+    lines.forEach((line, i) => {
+        if(!line.trim()) return;
+        const parts = line.trim().split(/\s+/);
+        const price = parts.pop();
+        const name = parts.join(' ');
+        const item = { id: i, name, price, unit: 'UN', img: 'https://cdn-icons-png.flaticon.com/512/263/263142.jpg' };
+        products.push(item);
+
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.id = `card-${i}`;
+        card.onclick = () => selectCard(i);
+        card.innerHTML = renderCardHTML(item);
+        grid.appendChild(card);
+    });
+    if(products.length > 0) selectCard(0);
+}
+
+function handleImageError(imgElement) {
+    imgElement.onerror = null;
+    imgElement.src = FALLBACK_IMG;
+    imgElement.style.opacity = '0.5';
+}
+
+function renderCardHTML(dados) {
+    let [reais, centavos] = (dados.price || "0,00").replace('.', ',').split(',');
+    if(!centavos) centavos = "00";
+    
+    return `
+        <div class="card-name">${dados.name}</div>
+        <div class="card-image-area">
+            <img src="${dados.img}" onerror="handleImageError(this)">
+        </div>
+        <div class="card-price-tag">
+            <span class="val">R$ ${reais}</span><span class="cents">,${centavos}</span>
+            <span class="unit">${dados.unit}</span>
+        </div>`;
+}
+
+function selectCard(idx) {
+    selectedIdx = idx;
+    document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+    const card = document.getElementById(`card-${idx}`);
+    if(card) card.classList.add('selected');
+    const p = products[idx];
+    
+    document.getElementById('editNome').value = p.name;
+    document.getElementById('editPreco').value = p.price;
+    document.getElementById('editSearch').value = p.name;
+    document.getElementById('editUnidade').value = p.unit;
+    
+    document.getElementById('editor-produto').style.opacity = '1';
+    document.getElementById('editor-produto').style.pointerEvents = 'all';
+
+    // Ao selecionar um card, automaticamente muda para a aba de Imagens para facilitar
+    // Descomente a linha abaixo se quiser esse comportamento automático:
+    // openTab('tab-imagens');
+}
+
+function applyEdits() {
+    if(selectedIdx === null) return;
+    const p = products[selectedIdx];
+    p.name = document.getElementById('editNome').value;
+    p.price = document.getElementById('editPreco').value;
+    p.unit = document.getElementById('editUnidade').value;
+    const card = document.getElementById(`card-${selectedIdx}`);
+    if(card) card.innerHTML = renderCardHTML(p);
+}
+
+async function searchImages() {
+    const query = document.getElementById('editSearch').value;
+    if(!query) return;
+    const url = `https://customsearch.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${CX}&searchType=image&q=${encodeURIComponent(query + " produto")}&num=12`;
+    
+    try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        const grid = document.getElementById('galleryGrid');
+        grid.innerHTML = '';
+        
+        if(!data.items) { alert("Nenhum resultado. Verifique sua cota da API."); return; }
+
+        data.items.forEach(item => {
+            const img = document.createElement('img');
+            img.src = item.link;
+            img.onclick = () => chooseImage(item.link);
+            grid.appendChild(img);
+        });
+        document.getElementById('modalGallery').style.display = 'flex';
+    } catch(e) { alert("Erro ao conectar com Google."); }
+}
+
+async function chooseImage(url) {
+    const removeBg = confirm("Deseja remover o fundo desta imagem?");
+    let finalUrl = url;
+
+    if(removeBg) {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        try {
+            const blob = await imglyRemoveBackground(url);
+            finalUrl = URL.createObjectURL(blob);
+        } catch(e) { 
+            alert("Aviso: Falha ao remover fundo. Aplicando original."); 
+        }
+    }
+    
+    products[selectedIdx].img = finalUrl;
+    applyEdits();
+    closeGallery();
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function closeGallery() { document.getElementById('modalGallery').style.display = 'none'; }
+
+function baixarImagem() {
+    const art = document.getElementById('artboard');
+    const scaleOriginal = art.style.transform;
+    art.style.transform = 'scale(1)';
+    
+    html2canvas(art, { scale: 2, useCORS: true, allowTaint: true }).then(canvas => {
+        const a = document.createElement('a');
+        a.download = `encarte_${temaSelecionado}.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+        art.style.transform = scaleOriginal;
+    }).catch(e => {
+        alert("Erro ao gerar imagem.");
+        art.style.transform = scaleOriginal;
+    });
+}
